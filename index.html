@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Doing History 〜歴史するアプリ2026〜</title>
+<style>
+  :root{
+    --ink:#131A2B; --ink2:#1B2440; --ink3:#2B3557; --line:#3A4569;
+    --paper:#EFEAE0; --dim:#9AA3BC; --shu:#D8443C; --shuSoft:#F0A09A;
+    --asagi:#6FC2C6; --asagiSoft:#A9DEE0; --gold:#C9A227;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--paper);
+    font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+    line-height:1.7;padding:16px;max-width:760px;margin:0 auto}
+  .mincho{font-family:"Hiragino Mincho ProN","Yu Mincho",serif}
+  h1{font-size:20px;margin:0;font-weight:600}
+  .sub{color:var(--shuSoft);font-size:14px;margin:2px 0 20px}
+  .panel{background:var(--ink2);border:1px solid var(--ink3);border-radius:6px;padding:14px;margin-bottom:14px}
+  .panel.shu{border-color:var(--shu)}
+  .panel.asagi{border-color:var(--asagi)}
+  .panel.gold{border-color:var(--gold)}
+  .tag{display:inline-block;padding:3px 8px;font-size:12px;border-radius:4px;
+    border:1px solid var(--shu);color:var(--shu)}
+  .tag.asagi{border-color:var(--asagi);color:var(--asagi)}
+  .tag.gold{border-color:var(--gold);color:var(--gold)}
+  .q{font-size:22px;line-height:1.75}
+  input,textarea,select{width:100%;background:var(--ink);color:var(--paper);
+    border:1px solid var(--line);border-radius:5px;padding:10px;font-size:17px;
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif}
+  button{background:var(--shu);color:var(--ink);border:0;border-radius:5px;
+    padding:11px 18px;font-size:15px;font-weight:600;cursor:pointer}
+  button.ghost{background:transparent;color:var(--dim);border:1px solid var(--line)}
+  button:disabled{background:var(--ink3);color:var(--dim);cursor:not-allowed}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .count{font-size:12px;color:var(--dim);margin-top:4px}
+  .note{font-size:13px;color:var(--dim)}
+  .ai{font-size:17px;line-height:2;color:var(--asagiSoft)}
+  .hunchbar{background:var(--ink2);border-left:3px solid var(--shu);
+    padding:8px 12px;border-radius:4px;margin-bottom:14px;font-size:14px}
+  .opener{border:1px solid var(--line);background:transparent;color:var(--paper);
+    font-size:14px;padding:8px 12px;border-radius:5px;font-weight:400}
+  .opener.on{background:var(--shu);color:var(--ink);border-color:var(--shu)}
+  .type{border:1px solid var(--line);background:transparent;color:var(--paper);
+    text-align:left;padding:9px 12px;min-width:135px;font-weight:400}
+  .type.on{background:var(--shu);color:var(--ink);border-color:var(--shu)}
+  .type b{display:block;font-size:15px}
+  .type span{font-size:11px;opacity:.8}
+  .cluster{background:var(--ink2);border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:8px}
+  .cluster.mine{background:var(--ink3);border-color:var(--shu)}
+  .cluster.min{border-color:var(--gold)}
+  .cname{font-size:19px}
+  .err{background:#3A1B1B;color:var(--shuSoft);padding:8px 12px;border-radius:5px;margin-bottom:12px;font-size:14px}
+  .foot{color:var(--line);font-size:12px;margin-top:28px}
+  a{color:var(--dim)}
+</style>
+</head>
+<body>
+
+<h1 class="mincho">Doing History（歴史実践）</h1>
+<p class="sub mincho">〜歴史するアプリ2026〜 by 八幡</p>
+
+<div id="err" class="err" style="display:none"></div>
+<div id="app"></div>
+
+<p class="foot">
+  <span id="who"></span>
+  <a href="#" id="reset">名前を変える</a>
+</p>
+
+<script>
+/* ===== ここだけ書き換える ===================================== */
+const API = 'ここにGASのウェブアプリURLを貼る';
+const CLASS = '高2';   /* このページを使うクラス。高3用は別リポジトリか別ファイルに */
+/* ============================================================= */
+
+const QTYPES = [
+  ['因果','なぜ起きたのか / 決定的だったのは何か'],
+  ['変化と継続','何が変わり、何が変わらなかったのか'],
+  ['比較','なぜ地域や時代で結果が分かれたのか'],
+  ['意義','誰にとって、いつの時点から見て重要か'],
+  ['史料の視点','誰が書き残し、誰が書き残されなかったか']
+];
+const OPENERS = ['AIに足りないのは、','AIとは別の見方をすると、','これを今の社会に置くと、'];
+
+let me = null, S = null, mine = null, roster = [], mode = 'student';
+let sending = false;
+
+/* ---- 通信（プリフライトを起こさないため text/plain で送る） ---- */
+async function api(payload){
+  const res = await fetch(API, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(Object.assign({cls:CLASS}, payload))
+  });
+  return await res.json();
+}
+function err(m){
+  const e = document.getElementById('err');
+  if(!m){ e.style.display='none'; return; }
+  e.textContent = m; e.style.display='block';
+  setTimeout(()=>{ e.style.display='none'; }, 6000);
+}
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---- 起動 ---- */
+(async function(){
+  try{ me = JSON.parse(localStorage.getItem('dh2026:me')||'null'); }catch(e){}
+  document.getElementById('reset').onclick = e=>{
+    e.preventDefault(); localStorage.removeItem('dh2026:me'); location.reload();
+  };
+  const r = await api({action:'roster'});
+  roster = (r.roster||[]).filter(x=>x.cls===CLASS);
+  if(!me){ renderName(); return; }
+  document.getElementById('who').textContent = me.name + ' ';
+  await tick();
+  setInterval(tick, 4000);
+})();
+
+async function tick(){
+  if(sending) return;
+  const r = await api({action:'state', uid: me.uid});
+  if(!r.ok) return;
+  S = r.session; mine = r.mine;
+  render();
+}
+
+/* ---- 名前を選ぶ ---- */
+function renderName(){
+  const app = document.getElementById('app');
+  const opts = roster.map(x=>`<option value="${esc(x.name)}">${esc(x.no)} ${esc(x.name)}</option>`).join('');
+  app.innerHTML = `
+    <div class="panel">
+      <p class="note">名簿から自分を選んでください。この端末に記録されます。</p>
+      <select id="pick"><option value="">— 選ぶ —</option>${opts}</select>
+      <div class="row" style="margin-top:12px">
+        <button id="go" disabled>始める</button>
+      </div>
+    </div>`;
+  const sel = document.getElementById('pick'), go = document.getElementById('go');
+  sel.onchange = ()=>{ go.disabled = !sel.value; };
+  go.onclick = ()=>{
+    me = { uid: Math.random().toString(36).slice(2,10), name: sel.value };
+    localStorage.setItem('dh2026:me', JSON.stringify(me));
+    location.reload();
+  };
+}
+
+/* ---- 描画 ---- */
+function render(){
+  const app = document.getElementById('app');
+  if(!S){ app.innerHTML = `<p class="note">今日の回はまだ開かれていません。</p>`; return; }
+
+  if(mode==='presenter'){ renderPresenter(app); return; }
+
+  if(S.phase===0){
+    app.innerHTML = `
+      <div class="panel">
+        <p class="note">まもなく始まります。</p>
+        ${S.inherited ? `<p class="note" style="margin-top:12px">前回から引き継がれた問い</p>
+          <p class="mincho" style="font-size:17px">${esc(S.inherited)}</p>` : ``}
+      </div>
+      <button class="ghost" id="ip">今日の発表者です</button>`;
+    document.getElementById('ip').onclick = ()=>{ mode='presenter'; render(); };
+    return;
+  }
+
+  let h = questionBlock();
+  if(mine && mine.hunch && S.phase>=3){
+    h += `<div class="hunchbar"><span class="note">あなたの直感 </span><span class="mincho">${esc(mine.hunch)}</span></div>`;
+  }
+
+  if(S.phase===1) h += `<p class="note">問いを読んでいます。</p>`;
+  if(S.phase===2) h += hunchBlock();
+  if(S.phase===3) h += aiBlock();
+  if(S.phase===4) h += aiBlock() + mainBlock();
+  if(S.phase===5) h += clusterBlock();
+  if(S.phase===6) h += nextBlock();
+
+  app.innerHTML = h;
+  wire();
+}
+
+function questionBlock(){
+  return `<div class="panel shu">
+    <div class="row" style="margin-bottom:8px">
+      <span class="tag">${esc(S.qtype)}</span>
+      <span class="note">出題 ${esc(S.presenter)}</span>
+    </div>
+    <p class="q mincho">${esc(S.question)}</p>
+  </div>`;
+}
+
+function hunchBlock(){
+  if(mine && mine.hunch) return `<div class="panel shu"><p class="note">直感を受け取りました。AIの回答を待ちましょう。</p></div>`;
+  return `<div class="panel shu">
+    <p>AIが考えている間に、あなたの直感を書いてください。</p>
+    <p class="note" style="margin-bottom:10px">20字。当たっていなくて構いません。出すと直せません。</p>
+    <input id="hunch" maxlength="20" placeholder="思いついたことを一言で">
+    <div class="count"><span id="hc">0</span> / 20</div>
+    <div class="row" style="margin-top:10px"><button id="hs" disabled>出す</button></div>
+  </div>`;
+}
+
+function aiBlock(){
+  if(S.aiStatus==='gen') return `<div class="panel asagi"><p style="color:var(--asagi)">AIが考えています</p></div>`;
+  if(S.aiStatus==='error') return `<div class="panel shu"><p style="color:var(--shuSoft)">AIの回答が届いていません。先生が対応します。</p></div>`;
+  return `<div class="panel asagi">
+    <span class="tag asagi">AIはここまでしか言っていない</span>
+    <p class="ai mincho" style="margin-bottom:0">${esc(S.aiAnswer)}</p>
+  </div>`;
+}
+
+function mainBlock(){
+  if(mine && mine.main){
+    return `<div class="panel shu">
+      <p class="note">提出しました</p>
+      <p class="mincho" style="font-size:17px">${esc(mine.opener)}${esc(mine.main)}</p>
+    </div>`;
+  }
+  return `<div class="panel shu">
+    <p>AIの回答を読んだうえで、あなたの考えを書いてください。</p>
+    <div class="row" style="margin:10px 0">
+      ${OPENERS.map((o,i)=>`<button class="opener ${i===0?'on':''}" data-o="${i}">${o}</button>`).join('')}
+    </div>
+    <textarea id="main" rows="4" maxlength="100" placeholder="${OPENERS[0]}"></textarea>
+    <div class="row" style="justify-content:space-between;margin-top:8px">
+      <span class="count"><span id="mc">0</span> / 100</span>
+      <button id="ms" disabled>提出する</button>
+    </div>
+  </div>`;
+}
+
+function clusterBlock(){
+  const a = S.analysis;
+  if(!a) return `<div class="panel asagi"><p style="color:var(--asagi)">分布を作っています</p></div>`;
+  const myC = (a.clusters||[]).find(c=>(c.members||[]).indexOf(me.name)>=0);
+  let h = a.axis ? `<div class="panel asagi"><p class="tag asagi">意見が分かれた軸</p>
+    <p class="mincho" style="font-size:18px;margin-bottom:0">${esc(a.axis)}</p></div>` : '';
+  h += (a.clusters||[]).map(c=>{
+    const isMine = myC && myC.name===c.name;
+    return `<div class="cluster ${isMine?'mine':''} ${c.isMinority?'min':''}">
+      <div class="row" style="margin-bottom:4px">
+        <span class="cname mincho" style="${c.isMinority?'color:var(--gold)':''}">${esc(c.name)}</span>
+        <span class="note">${(c.members||[]).length}人</span>
+        ${c.isMinority?'<span class="tag gold">少数の立場</span>':''}
+        ${isMine?'<span class="tag">あなたはここ</span>':''}
+      </div>
+      <p class="note" style="margin:0">${esc(c.summary)}</p>
+    </div>`;
+  }).join('');
+  if(a.overlooked) h += `<div class="panel asagi"><p class="tag asagi">全員が触れていない論点</p>
+    <p class="mincho" style="font-size:17px;margin-bottom:0">${esc(a.overlooked)}</p></div>`;
+  return h;
+}
+
+function nextBlock(){
+  const qs = S.nextQuestions||[];
+  const amPresenter = me.name === S.presenter;
+  let h = `<div class="panel gold"><p class="tag gold">ここから先へ</p>`;
+  h += qs.map((q,i)=>`<div style="margin-top:12px">
+      <span class="tag asagi">${esc(q.type)}</span>
+      <p class="mincho" style="font-size:18px;margin:4px 0 0">${esc(q.question)}</p>
+      ${q.from?`<p class="note" style="margin:2px 0 0">${esc(q.from)} の回答から生まれた問い</p>`:''}
+      ${amPresenter?`<button class="ghost" style="margin-top:6px" data-pick="${i}">これを次回に渡す</button>`:''}
+    </div>`).join('');
+  if(S.chosenNext) h += `<p class="note" style="margin-top:14px">次回に渡した問い：${esc(S.chosenNext)}</p>`;
+  h += `</div>`;
+  return h;
+}
+
+/* ---- 発表者 ---- */
+function renderPresenter(app){
+  if(S.question){
+    app.innerHTML = questionBlock() +
+      `<p class="note">${S.aiStatus==='gen'?'AIが回答を書いています。みんなは直感を書いています。':'先生が進行します。'}</p>
+       <button class="ghost" id="back">生徒の画面へ</button>`;
+    document.getElementById('back').onclick = ()=>{ mode='student'; render(); };
+    return;
+  }
+  app.innerHTML = `
+    ${S.inherited?`<div class="panel asagi"><p class="tag asagi">前回から引き継がれた問い</p>
+      <p class="mincho" style="font-size:17px">${esc(S.inherited)}</p>
+      <p class="note">使っても、無視して自分の問いを立てても構いません。</p></div>`:''}
+    <div class="panel">
+      <p class="note">前回の授業を踏まえた問いを立ててください。調べれば答えが出る問いより、解釈が分かれる問いを。</p>
+      <textarea id="pq" rows="3" maxlength="200" placeholder="例：産業革命がイギリスで最初に起きた決定的な理由は何か"></textarea>
+      <div class="count"><span id="pc">0</span> / 200</div>
+      <p class="note" style="margin-top:14px">この問いはどの型ですか</p>
+      <div class="row">
+        ${QTYPES.map((t,i)=>`<button class="type ${i===0?'on':''}" data-t="${i}"><b>${t[0]}</b><span>${t[1]}</span></button>`).join('')}
+      </div>
+      <input id="pi" maxlength="50" style="margin-top:14px;font-size:14px" placeholder="出題意図のメモ（50字・先生だけが見ます）">
+      <div class="row" style="margin-top:14px">
+        <button id="psend" disabled>問いを確定してAIに投げる</button>
+        <button class="ghost" id="back">やめる</button>
+      </div>
+    </div>`;
+  let qtype = QTYPES[0][0];
+  const pq = document.getElementById('pq'), ps = document.getElementById('psend');
+  pq.oninput = ()=>{ document.getElementById('pc').textContent = pq.value.length; ps.disabled = !pq.value.trim(); };
+  document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('[data-t]').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); qtype = QTYPES[b.dataset.t][0];
+  });
+  document.getElementById('back').onclick = ()=>{ mode='student'; render(); };
+  ps.onclick = async ()=>{
+    sending = true; ps.disabled = true; ps.textContent = '送っています';
+    const r = await api({action:'setQuestion', presenter: me.name,
+      question: pq.value.trim(), qtype: qtype, intent: document.getElementById('pi').value.trim()});
+    sending = false;
+    if(!r.ok){ err(r.error); ps.disabled=false; ps.textContent='問いを確定してAIに投げる'; return; }
+    S = r.session; render();
+    const g = await api({action:'generateAI'});
+    if(!g.ok) err('AIの回答を取れませんでした。先生に伝えてください。');
+    await tick();
+  };
+}
+
+/* ---- 入力の配線 ---- */
+function wire(){
+  const h = document.getElementById('hunch');
+  if(h){
+    const hs = document.getElementById('hs');
+    h.oninput = ()=>{ document.getElementById('hc').textContent = h.value.length; hs.disabled = !h.value.trim(); };
+    hs.onclick = async ()=>{
+      sending = true; hs.disabled = true;
+      const r = await api({action:'submitHunch', uid:me.uid, name:me.name, hunch:h.value.trim()});
+      sending = false;
+      if(!r.ok) err(r.error); else await tick();
+    };
+  }
+  const m = document.getElementById('main');
+  if(m){
+    let opener = OPENERS[0];
+    const ms = document.getElementById('ms');
+    document.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{
+      document.querySelectorAll('[data-o]').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on'); opener = OPENERS[b.dataset.o]; m.placeholder = opener;
+    });
+    m.oninput = ()=>{ document.getElementById('mc').textContent = m.value.length; ms.disabled = !m.value.trim(); };
+    ms.onclick = async ()=>{
+      sending = true; ms.disabled = true;
+      const r = await api({action:'submitMain', uid:me.uid, name:me.name, opener:opener, main:m.value.trim()});
+      sending = false;
+      if(!r.ok) err(r.error); else await tick();
+    };
+  }
+  document.querySelectorAll('[data-pick]').forEach(b=>b.onclick=async ()=>{
+    const q = (S.nextQuestions||[])[b.dataset.pick];
+    sending = true;
+    await api({action:'pickNext', question:q.question, from:q.from||''});
+    sending = false; await tick();
+  });
+}
+</script>
+</body>
+</html>
