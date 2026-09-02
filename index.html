@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Doing History 〜歴史するアプリ2026〜</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Shippori+Mincho:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0E1524; --ink2:#16203A; --ink3:#22304F; --line:#33456B;
+    --paper:#F0EADC; --dim:#96A2BC;
+    --shu:#D8443C; --shuSoft:#EFA39C;
+    --asagi:#6FC2C6; --asagiSoft:#A9DEE0;
+    --gold:#C9A227; --goldSoft:#E4CE86;
+    --serif:"Cormorant Garamond","Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+    --sans:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--ink);color:var(--paper)}
+  body{font-family:var(--sans);line-height:1.75;padding:0 18px 60px;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(201,162,39,.045) 0 1px, transparent 1px 72px),
+      repeating-linear-gradient(90deg, rgba(201,162,39,.045) 0 1px, transparent 1px 72px),
+      radial-gradient(120% 80% at 50% 0%, rgba(111,194,198,.06), transparent 60%);}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:url("map.jpg");background-repeat:no-repeat;
+    background-position:center 12%;background-size:min(1500px,168%) auto;
+    opacity:.085;filter:grayscale(.35) contrast(.92);}
+  #gauguin{position:fixed;left:0;right:0;bottom:0;height:38vh;pointer-events:none;z-index:0;
+    background-image:url("gauguin.jpg");background-repeat:no-repeat;
+    background-position:center bottom;background-size:cover;
+    opacity:.16;filter:saturate(.85) contrast(.95);
+    -webkit-mask-image:linear-gradient(to top, rgba(0,0,0,.95) 0%, rgba(0,0,0,.45) 45%, transparent 100%);
+    mask-image:linear-gradient(to top, rgba(0,0,0,.95) 0%, rgba(0,0,0,.45) 45%, transparent 100%);}
+  .wrap{position:relative;z-index:1;max-width:760px;margin:0 auto}
+
+  .masthead{padding:28px 0 16px}
+  .latin{font-family:var(--serif);font-weight:300;letter-spacing:.34em;
+    font-size:13px;color:var(--gold);margin:0 0 6px;text-transform:uppercase}
+  .masthead h1{font-family:var(--serif);font-weight:600;font-size:31px;
+    letter-spacing:.14em;margin:0;line-height:1.2}
+  .rule{height:1px;background:linear-gradient(90deg,var(--gold),rgba(201,162,39,.15) 55%,transparent);margin:12px 0 8px}
+  .byline{font-family:var(--serif);font-size:14px;color:var(--dim);letter-spacing:.08em;margin:0}
+  .gauguin-line{font-family:var(--serif);font-size:13px;letter-spacing:.16em;
+    color:var(--gold);margin:0 0 4px;font-style:italic}
+
+  .mincho{font-family:var(--serif)}
+  .panel{background:rgba(22,32,58,.88);backdrop-filter:blur(2px);
+    border:1px solid var(--ink3);border-radius:3px;padding:18px;margin-bottom:16px}
+  .panel.shu{border-color:rgba(216,68,60,.55);box-shadow:inset 3px 0 0 var(--shu)}
+  .panel.asagi{border-color:rgba(111,194,198,.45);box-shadow:inset 3px 0 0 var(--asagi)}
+  .panel.gold{border-color:rgba(201,162,39,.5);box-shadow:inset 3px 0 0 var(--gold)}
+  .label{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin:0 0 8px}
+  .tag{display:inline-block;padding:3px 10px;font-size:11px;letter-spacing:.14em;
+    border:1px solid var(--shu);color:var(--shu);border-radius:2px}
+  .tag.asagi{border-color:var(--asagi);color:var(--asagi)}
+  .tag.gold{border-color:var(--gold);color:var(--gold)}
+  .q{font-family:var(--serif);font-size:25px;line-height:1.8;letter-spacing:.03em;margin:0}
+
+  input,textarea,select{width:100%;background:rgba(10,16,28,.7);color:var(--paper);
+    border:1px solid var(--line);border-radius:3px;padding:12px;font-size:17px;
+    font-family:var(--serif);line-height:1.9}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold)}
+  select{font-size:16px}
+  button{background:var(--shu);color:#12131A;border:0;border-radius:3px;padding:12px 20px;
+    font-size:15px;font-weight:600;letter-spacing:.06em;cursor:pointer;font-family:var(--sans)}
+  button.ghost{background:transparent;color:var(--dim);border:1px solid var(--line)}
+  button:disabled{background:var(--ink3);color:var(--dim);cursor:not-allowed}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .count{font-size:12px;color:var(--dim);margin-top:6px;letter-spacing:.1em}
+  .note{font-size:13.5px;color:var(--dim)}
+  .ai{font-family:var(--serif);font-size:18px;line-height:2.1;color:var(--asagiSoft);margin:0}
+  .opener{border:1px solid var(--line);background:transparent;color:var(--paper);
+    font-size:14px;padding:9px 13px;font-family:var(--serif);font-weight:400}
+  .opener.on{background:var(--shu);color:#12131A;border-color:var(--shu)}
+  .type{border:1px solid var(--line);background:transparent;color:var(--paper);
+    text-align:left;padding:11px 14px;min-width:150px;font-weight:400}
+  .type.on{background:rgba(216,68,60,.16);border-color:var(--shu)}
+  .type b{display:block;font-family:var(--serif);font-size:16px;letter-spacing:.08em}
+  .type span{font-size:11px;color:var(--dim)}
+  .cluster{background:var(--ink2);border:1px solid var(--ink3);border-radius:3px;padding:14px;margin-bottom:9px}
+  .cluster.mine{box-shadow:inset 3px 0 0 var(--shu)}
+  .cluster.min{border-color:rgba(201,162,39,.55);box-shadow:inset 3px 0 0 var(--gold)}
+  .cname{font-family:var(--serif);font-size:21px;letter-spacing:.06em}
+  .err{border:1px solid rgba(216,68,60,.6);background:rgba(216,68,60,.12);
+    color:var(--shuSoft);padding:10px 14px;border-radius:3px;margin-bottom:14px;font-size:14px}
+  .foot{color:var(--line);font-size:12px;margin-top:34px;letter-spacing:.1em}
+  a{color:var(--dim)}
+  .cls{border:1px solid var(--line);background:transparent;color:var(--paper);
+    font-family:var(--serif);font-size:20px;letter-spacing:.14em;padding:14px 26px}
+  .cls.on{background:rgba(201,162,39,.16);border-color:var(--gold);color:var(--goldSoft)}
+
+  /* 自分の歩み */
+  .steps{display:flex;gap:0;margin-bottom:16px;font-size:12px;letter-spacing:.1em}
+  .st{flex:1;text-align:center;padding:7px 4px;border-bottom:2px solid var(--ink3);color:var(--line)}
+  .st.on{border-bottom-color:var(--shu);color:var(--paper)}
+  .st.done{border-bottom-color:var(--gold);color:var(--goldSoft)}
+
+  /* みんなの言葉 */
+  .o{border-bottom:1px solid rgba(51,69,107,.5);padding:10px 0}
+  .o:last-child{border-bottom:0}
+  .o .nm{font-size:12px;color:var(--dim);letter-spacing:.08em}
+  .o .hu{font-family:var(--serif);font-size:15px;color:var(--shuSoft);margin:2px 0 0}
+  .o .mn{font-family:var(--serif);font-size:16px;line-height:1.85;margin:3px 0 0}
+  .o .cl{font-size:10.5px;color:var(--asagi);letter-spacing:.1em}
+  .o .cl.min{color:var(--goldSoft)}
+  .dist{font-size:10.5px;letter-spacing:.08em;border:1px solid var(--line);
+    color:var(--dim);border-radius:2px;padding:1px 7px;margin-left:6px}
+  .dist.hi{border-color:var(--gold);color:var(--goldSoft)}
+  .waiting{font-size:12.5px;color:var(--line)}
+  .blind{font-family:var(--serif);font-size:21px;line-height:1.8;color:var(--goldSoft);margin:0}
+</style>
+</head>
+<body>
+<div id="gauguin"></div>
+<div class="wrap">
+  <div class="masthead">
+    <p class="latin">Doing History</p>
+    <h1 class="mincho">歴史実践</h1>
+    <div class="rule"></div>
+    <p class="byline">〜歴史するアプリ2026〜　by 八幡</p>
+  </div>
+
+  <div id="err" class="err" style="display:none"></div>
+  <div id="app"></div>
+
+  <p class="foot"><span id="who"></span> <a href="#" id="reset">選び直す</a></p>
+</div>
+
+<script>
+/* ===== ここだけ書き換える ===================================== */
+const API = 'ここにGASのウェブアプリURLを貼る';
+/* ============================================================= */
+
+const QTYPES = [
+  ['因果','なぜ起きたのか / 決定的だったのは何か'],
+  ['変化と継続','何が変わり、何が変わらなかったのか'],
+  ['比較','なぜ地域や時代で結果が分かれたのか'],
+  ['意義','誰にとって、いつの時点から見て重要か'],
+  ['史料の視点','誰が書き残し、誰が書き残されなかったか']
+];
+const OPENERS = ['AIに足りないのは、','AIとは別の見方をすると、','これを今の社会に置くと、'];
+
+let me=null, S=null, mine=null, others=[], counts={}, allRoster=[], classes=[], mode='student';
+let pickCls='', sending=false;
+let dQ='', dIntent='', dType=QTYPES[0][0], dHunch='', dMain='', dOpener=OPENERS[0];
+let lastSig='';
+
+const norm = s => String(s==null?'':s)
+  .replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[\s　]/g,'');
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* 自分がいまどの段にいるか。教師の操作ではなく自分の提出状況で決まる */
+function myStep(){
+  if(!mine || !mine.hunch) return 'hunch';
+  if(!mine.main) return 'main';
+  return 'done';
+}
+
+/* 画面全体を作り直す判定に others は含めない（入力中の文字を守るため） */
+function sig(){
+  return JSON.stringify([mode, S&&S.id, S&&S.phase, S&&S.question, S&&S.qtype, S&&S.presenter,
+    S&&S.aiStatus, (S&&S.aiAnswer||'').length, S&&S.chosenNext, S&&S.pdfUrl,
+    S&&S.analysis?JSON.stringify(S.analysis).length:0,
+    S&&S.next?JSON.stringify(S.next).length:0,
+    myStep(), mine&&mine.cluster]);
+}
+
+async function api(p){
+  const res = await fetch(API,{method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(Object.assign({cls: me ? me.cls : pickCls}, p))});
+  return await res.json();
+}
+function err(m){
+  const e=document.getElementById('err');
+  if(!m){e.style.display='none';return;}
+  e.textContent=m; e.style.display='block';
+  setTimeout(()=>{e.style.display='none';},8000);
+}
+
+/* ---- 起動 ---- */
+(async function(){
+  try{ me = JSON.parse(localStorage.getItem('dh2026:me')||'null'); }catch(e){}
+  document.getElementById('reset').onclick = e=>{
+    e.preventDefault(); localStorage.removeItem('dh2026:me'); location.reload();
+  };
+  const r = await api({action:'roster'});
+  allRoster = r.roster||[];
+  classes = Array.from(new Set(allRoster.map(x=>String(x.cls)).filter(Boolean)));
+  if(!me){ pickCls = classes[0]||''; renderGate(); return; }
+  document.getElementById('who').textContent = me.cls + '　' + me.name;
+  await tick();
+  setInterval(tick, 4000);
+})();
+
+async function tick(){
+  if(sending) return;
+  const r = await api({action:'state', uid: me.uid});
+  if(!r.ok) return;
+  S=r.session; mine=r.mine; others=r.others||[]; counts=r.counts||{};
+  if(sig()===lastSig){ refreshOthers(); return; }
+  render();
+}
+
+/* ---- 入口 ---- */
+function renderGate(){
+  const app = document.getElementById('app');
+  if(allRoster.length===0){
+    app.innerHTML = `<div class="panel"><p class="note">名簿が読み込めませんでした。先生に伝えてください。</p></div>`;
+    return;
+  }
+  const list = allRoster.filter(x=>norm(x.cls)===norm(pickCls));
+  app.innerHTML = `
+    <div class="panel">
+      <p class="label">Class</p>
+      <div class="row" style="margin-bottom:22px">
+        ${classes.map(c=>`<button class="cls ${norm(c)===norm(pickCls)?'on':''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}
+      </div>
+      <p class="label">Name</p>
+      <select id="pick">
+        <option value="">— 名簿から自分を選ぶ —</option>
+        ${list.map(x=>`<option value="${esc(x.name)}">${esc(x.no)}　${esc(x.name)}</option>`).join('')}
+      </select>
+      <p class="note" style="margin-top:8px">選んだ内容はこの端末に記録されます。</p>
+      <div class="row" style="margin-top:16px"><button id="go" disabled>始める</button></div>
+    </div>`;
+  document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{ pickCls=b.dataset.c; renderGate(); });
+  const sel=document.getElementById('pick'), go=document.getElementById('go');
+  sel.onchange=()=>{ go.disabled=!sel.value; };
+  go.onclick=()=>{
+    me={ uid:Math.random().toString(36).slice(2,10), name:sel.value, cls:pickCls };
+    localStorage.setItem('dh2026:me', JSON.stringify(me));
+    location.reload();
+  };
+}
+
+/* ---- 描画 ---- */
+function render(){
+  lastSig = sig();
+  const app = document.getElementById('app');
+  if(!S){ app.innerHTML = `<div class="panel"><p class="note">今日の回はまだ開かれていません。</p></div>`; return; }
+  if(mode==='presenter'){ renderPresenter(app); return; }
+
+  if(S.phase===0 || !S.question){
+    app.innerHTML = `
+      <div class="panel">
+        <p class="gauguin-line">D'où venons-nous&#8201;? Que sommes-nous&#8201;? Où allons-nous&#8201;?</p>
+        <p class="note" style="margin:0 0 14px">我々はどこから来たのか　我々は何者か　我々はどこへ行くのか</p>
+        <div class="rule" style="margin:0 0 14px"></div>
+        <p class="note" style="margin:0">まもなく始まります。</p>
+        ${S.inherited?`<div class="rule" style="margin:18px 0 12px"></div>
+          <p class="label">前回から引き継がれた問い</p>
+          <p class="mincho" style="font-size:19px;line-height:1.9;margin:0">${esc(S.inherited)}</p>`:''}
+      </div>
+      <button class="ghost" id="ip">今日の発表者です</button>`;
+    document.getElementById('ip').onclick=()=>{mode='presenter';render();};
+    return;
+  }
+
+  const step = myStep();
+  let h = stepBar(step) + questionBlock();
+
+  if(S.phase < 5){
+    /* 自分のペースで 直感 → AI → 本記入 */
+    if(step==='hunch'){
+      h += hunchBlock();
+    } else if(step==='main'){
+      h += myHunchBar() + aiBlock() + mainBlock();
+    } else {
+      h += myHunchBar() + aiBlock() + myMainBlock();
+    }
+  } else {
+    /* 分布より後は全員そろって同じものを見る */
+    h += myHunchBar() + aiBlock() + (mine&&mine.main?myMainBlock():'');
+    if(S.phase>=5) h += clusterBlock();
+    if(S.phase>=6) h += nextBlock();
+  }
+
+  h += `<div class="panel" id="othersPanel">
+      <p class="label" id="othersLabel">みんなの言葉</p>
+      <div id="others"></div>
+      <p class="note" style="margin:12px 0 0;font-size:12px">
+        数字はAIの回答からの距離です。大きいほど、AIの言い回しから離れた自分の言葉で書けています。</p>
+    </div>`;
+
+  app.innerHTML = h;
+  wire();
+  refreshOthers();
+}
+
+function stepBar(step){
+  const done = s => (step==='done') || (step==='main' && s!=='main');
+  return `<div class="steps">
+    <div class="st ${step==='hunch'?'on':'done'}">1　直感</div>
+    <div class="st ${step==='hunch'?'':(step==='main'?'on':'done')}">2　AIの回答</div>
+    <div class="st ${step==='main'?'on':(step==='done'?'done':'')}">3　本記入</div>
+  </div>`;
+}
+
+function questionBlock(){
+  return `<div class="panel shu">
+    <div class="row" style="margin-bottom:12px">
+      <span class="tag">${esc(S.qtype)}</span>
+      <span class="note">出題　${esc(S.presenter)}</span>
+    </div>
+    <p class="q">${esc(S.question)}</p>
+  </div>`;
+}
+
+function myHunchBar(){
+  if(!mine || !mine.hunch) return '';
+  return `<div style="border-left:2px solid var(--shu);padding:6px 0 6px 12px;margin-bottom:16px;font-size:14px">
+    <span class="note">あなたの直感　</span>
+    <span class="mincho" style="font-size:16px">${esc(mine.hunch)}</span></div>`;
+}
+
+function hunchBlock(){
+  return `<div class="panel shu">
+    <p class="label">1　First Thought</p>
+    <p style="margin:0 0 4px">AIの回答を見る前に、あなたの直感を書いてください。</p>
+    <p class="note" style="margin:0 0 14px">20字。当たっていなくて構いません。出すとAIの回答が開きます。</p>
+    <input id="hunch" maxlength="20" value="${esc(dHunch)}" placeholder="思いついたことを一言で">
+    <div class="count"><span id="hc">${dHunch.length}</span> / 20</div>
+    <div class="row" style="margin-top:14px"><button id="hs" ${dHunch.trim()?'':'disabled'}>出してAIの回答を見る</button></div>
+  </div>`;
+}
+
+function aiBlock(){
+  if(S.aiStatus==='gen')
+    return `<div class="panel asagi"><p style="color:var(--asagi);margin:0">AIが考えています。もう少し待ってください。</p></div>`;
+  if(S.aiStatus==='error')
+    return `<div class="panel shu"><p style="color:var(--shuSoft);margin:0">AIの回答が届いていません。先生が対応します。</p></div>`;
+  return `<div class="panel asagi">
+    <span class="tag asagi">AIはここまでしか言っていない</span>
+    <p class="ai" style="margin-top:12px">${esc(S.aiAnswer)}</p>
+  </div>`;
+}
+
+function mainBlock(){
+  if(S.aiStatus!=='ready')
+    return `<div class="panel"><p class="note" style="margin:0">AIの回答が出たら書けます。</p></div>`;
+  return `<div class="panel shu">
+    <p class="label">3　Your Reading</p>
+    <p style="margin:0 0 12px">AIの回答を読んだうえで、あなたの考えを書いてください。</p>
+    <div class="row" style="margin-bottom:12px">
+      ${OPENERS.map((o,i)=>`<button class="opener ${o===dOpener?'on':''}" data-o="${i}">${o}</button>`).join('')}
+    </div>
+    <textarea id="main" rows="4" maxlength="100" placeholder="${esc(dOpener)}">${esc(dMain)}</textarea>
+    <div class="row" style="justify-content:space-between;margin-top:10px">
+      <span class="count"><span id="mc">${dMain.length}</span> / 100</span>
+      <button id="ms" ${dMain.trim()?'':'disabled'}>提出する</button>
+    </div>
+  </div>`;
+}
+
+function myMainBlock(){
+  const d = mine && mine.distance;
+  return `<div class="panel shu">
+    <div class="row" style="justify-content:space-between">
+      <p class="label" style="margin:0">あなたの考え</p>
+      ${d!==''&&d!=null?`<span class="dist ${d>=60?'hi':''}">AIとの距離 ${esc(d)}</span>`:''}
+    </div>
+    <p class="mincho" style="font-size:18px;line-height:2;margin:10px 0 0">${esc(mine.opener)}${esc(mine.main)}</p>
+    ${mine.cluster?`<p class="note" style="margin:10px 0 0">あなたの立場　<span style="color:${mine.isMinority?'var(--goldSoft)':'var(--asagi)'}">${esc(mine.cluster)}${mine.isMinority?'（少数の立場）':''}</span></p>`:''}
+  </div>`;
+}
+
+/* ---- みんなの言葉（部分更新・常に全員分） ---- */
+function refreshOthers(){
+  const box = document.getElementById('others');
+  if(!box || !S) return;
+  const lab = document.getElementById('othersLabel');
+  if(lab) lab.textContent = `みんなの言葉　　直感 ${counts.hunch||0}　本記入 ${counts.main||0}`;
+
+  const list = others.filter(o=>o.hunch || o.main);
+  if(list.length===0){ box.innerHTML = `<p class="waiting">まだ誰も書いていません。</p>`; return; }
+
+  box.innerHTML = list.map(o=>`
+    <div class="o">
+      <div class="row" style="justify-content:space-between;gap:6px">
+        <span class="nm">${esc(o.name)}${o.cluster?`　<span class="cl ${o.isMinority?'min':''}">${esc(o.cluster)}${o.isMinority?'（少数）':''}</span>`:''}</span>
+        ${o.distance!==''&&o.distance!=null?`<span class="dist ${o.distance>=60?'hi':''}">距離 ${esc(o.distance)}</span>`:''}
+      </div>
+      ${o.hunch?`<div class="hu">${esc(o.hunch)}</div>`:''}
+      ${o.main?`<div class="mn">${esc(o.opener)}${esc(o.main)}</div>`:''}
+    </div>`).join('');
+}
+
+function clusterBlock(){
+  const a = S.analysis;
+  if(!a) return `<div class="panel asagi"><p style="color:var(--asagi);margin:0">分布を作っています</p></div>`;
+  const myC = (a.clusters||[]).find(c=>(c.members||[]).indexOf(me.name)>=0);
+  let h = a.axis?`<div class="panel asagi"><p class="label">意見が分かれた軸</p>
+    <p class="mincho" style="font-size:19px;line-height:1.9;margin:0">${esc(a.axis)}</p></div>`:'';
+  h += (a.clusters||[]).map(c=>{
+    const isMine = myC && myC.name===c.name;
+    return `<div class="cluster ${isMine?'mine':''} ${c.isMinority?'min':''}">
+      <div class="row" style="margin-bottom:6px">
+        <span class="cname" style="${c.isMinority?'color:var(--goldSoft)':''}">${esc(c.name)}</span>
+        <span class="note">${(c.members||[]).length}人</span>
+        ${c.isMinority?'<span class="tag gold">少数の立場</span>':''}
+        ${isMine?'<span class="tag">あなたはここ</span>':''}
+      </div>
+      <p class="note" style="margin:0">${esc(c.summary)}</p>
+    </div>`;
+  }).join('');
+  return h;
+}
+
+function nextBlock(){
+  const nx = S.next || {};
+  const blind = nx.blindspot || (S.analysis && S.analysis.overlooked) || '';
+  const qs = nx.questions || [];
+  const amPresenter = me.name === S.presenter;
+
+  let h = '';
+  if(blind){
+    h += `<div class="panel gold">
+      <p class="label" style="color:var(--gold)">今日、誰も触れていない視点</p>
+      <p class="blind">${esc(blind)}</p></div>`;
+  }
+  h += `<div class="panel"><p class="label">ここから先へ　—　この視点に踏み込むための問い</p>`;
+  h += qs.map((q,i)=>`<div style="margin-top:16px">
+      <div class="row" style="gap:8px">
+        <span class="tag asagi">${esc(q.type)}</span>
+        ${q.why?`<span class="note">${esc(q.why)}</span>`:''}
+      </div>
+      <p class="mincho" style="font-size:19px;line-height:1.9;margin:6px 0 0">${esc(q.question)}</p>
+      ${q.from?`<p class="note" style="margin:4px 0 0">${esc(q.from)} の回答から生まれた問い</p>`:''}
+      ${amPresenter?`<button class="ghost" style="margin-top:8px" data-pick="${i}">これを次回に渡す</button>`:''}
+    </div>`).join('');
+  if(S.chosenNext) h += `<div class="rule" style="margin:20px 0 10px"></div>
+    <p class="note" style="margin:0">次回に渡した問い　${esc(S.chosenNext)}</p>`;
+  h += `</div>`;
+
+  if(S.pdfUrl){
+    h += `<div class="panel asagi">
+      <p class="label">今日のまとめ（A4 1枚）</p>
+      <p style="margin:0"><a href="${esc(S.pdfUrl)}" target="_blank"
+        style="color:var(--asagiSoft);font-family:var(--serif);font-size:18px">まとめPDFを開く</a></p>
+    </div>`;
+  }
+  return h;
+}
+
+/* ---- 発表者 ---- */
+function renderPresenter(app){
+  if(S.question){ mode='student'; render(); return; }
+  app.innerHTML = `
+    ${S.inherited?`<div class="panel asagi"><p class="label">前回から引き継がれた問い</p>
+      <p class="mincho" style="font-size:19px;line-height:1.9;margin:0 0 8px">${esc(S.inherited)}</p>
+      <p class="note" style="margin:0">使っても、無視して自分の問いを立てても構いません。</p></div>`:''}
+    <div class="panel">
+      <p class="label">Question of the Day</p>
+      <p class="note" style="margin:0 0 12px">前回の授業を踏まえた問いを立ててください。調べれば答えが出る問いより、解釈が分かれる問いを。</p>
+      <textarea id="pq" rows="3" maxlength="200" placeholder="例：産業革命がイギリスで最初に起きた決定的な理由は何か">${esc(dQ)}</textarea>
+      <div class="count"><span id="pc">${dQ.length}</span> / 200</div>
+      <div class="rule" style="margin:22px 0 14px"></div>
+      <p class="label">この問いはどの型ですか</p>
+      <div class="row">
+        ${QTYPES.map((t,i)=>`<button class="type ${t[0]===dType?'on':''}" data-t="${i}"><b>${t[0]}</b><span>${t[1]}</span></button>`).join('')}
+      </div>
+      <input id="pi" maxlength="50" value="${esc(dIntent)}" style="margin-top:18px;font-size:14px" placeholder="出題意図のメモ（50字・先生だけが見ます）">
+      <div class="row" style="margin-top:18px">
+        <button id="psend" ${dQ.trim()?'':'disabled'}>問いを確定してAIに投げる</button>
+        <button class="ghost" id="back">やめる</button>
+      </div>
+    </div>`;
+  const pq=document.getElementById('pq'), ps=document.getElementById('psend');
+  pq.oninput=()=>{ dQ=pq.value; document.getElementById('pc').textContent=dQ.length; ps.disabled=!dQ.trim(); };
+  document.getElementById('pi').oninput=e=>{ dIntent=e.target.value; };
+  document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('[data-t]').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); dType=QTYPES[b.dataset.t][0];
+  });
+  document.getElementById('back').onclick=()=>{mode='student';render();};
+  ps.onclick = async ()=>{
+    sending=true; ps.disabled=true; ps.textContent='送っています';
+    const r = await api({action:'setQuestion', presenter:me.name,
+      question:dQ.trim(), qtype:dType, intent:dIntent.trim()});
+    sending=false;
+    if(!r.ok){ err(r.error); ps.disabled=false; ps.textContent='問いを確定してAIに投げる'; return; }
+    dQ=''; dIntent=''; mode='student';
+    S=r.session; lastSig=''; render();
+    const g = await api({action:'generateAI'});
+    if(!g.ok) err('AIの回答を取れませんでした。先生に伝えてください。');
+    lastSig=''; await tick();
+  };
+}
+
+/* ---- 入力の配線 ---- */
+function wire(){
+  const h=document.getElementById('hunch');
+  if(h){
+    const hs=document.getElementById('hs');
+    h.oninput=()=>{ dHunch=h.value; document.getElementById('hc').textContent=dHunch.length; hs.disabled=!dHunch.trim(); };
+    hs.onclick=async()=>{
+      sending=true; hs.disabled=true;
+      const r=await api({action:'submitHunch', uid:me.uid, name:me.name, hunch:dHunch.trim()});
+      sending=false;
+      if(!r.ok) err(r.error); else { dHunch=''; lastSig=''; await tick(); }
+    };
+  }
+  const m=document.getElementById('main');
+  if(m){
+    const ms=document.getElementById('ms');
+    document.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{
+      document.querySelectorAll('[data-o]').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on'); dOpener=OPENERS[b.dataset.o]; m.placeholder=dOpener;
+    });
+    m.oninput=()=>{ dMain=m.value; document.getElementById('mc').textContent=dMain.length; ms.disabled=!dMain.trim(); };
+    ms.onclick=async()=>{
+      sending=true; ms.disabled=true;
+      const r=await api({action:'submitMain', uid:me.uid, name:me.name, opener:dOpener, main:dMain.trim()});
+      sending=false;
+      if(!r.ok) err(r.error); else { dMain=''; lastSig=''; await tick(); }
+    };
+  }
+  document.querySelectorAll('[data-pick]').forEach(b=>b.onclick=async()=>{
+    const q=((S.next&&S.next.questions)||[])[b.dataset.pick];
+    if(!q) return;
+    sending=true;
+    await api({action:'pickNext', question:q.question, from:q.from||''});
+    sending=false; lastSig=''; await tick();
+  });
+}
+</script>
+</body>
+</html>
